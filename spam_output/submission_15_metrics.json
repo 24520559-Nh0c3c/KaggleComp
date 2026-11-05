@@ -1,0 +1,23 @@
+{
+  "model": "Championship 80-Tree + Dual-Context (XLM-Ctx + PhoBERT-Ctx + XLM-TTA + DeBERTa + RoBERTa + TF-IDF) + KNN/SVD + Copy-Paste Signals",
+  "features_count": 233,
+  "weights": [
+    1.0,
+    1.142,
+    0.982,
+    0.992
+  ],
+  "raw_oof_macro_f1": 0.8032621028111481,
+  "raw_full_oof_macro_f1": 0.7986536546107073,
+  "strict_nested_cv_oof_macro_f1": 0.8085612617942761,
+  "strict_nested_cv_full_macro_f1": 0.8037703686261164,
+  "oof_macro_f1": 0.8087177127390373,
+  "full_15896_oof_macro_f1": 0.803910917013159,
+  "dev_macro_f1": 0.7429186524639644,
+  "test_distribution": {
+    "0": 2901,
+    "3": 695,
+    "2": 332,
+    "1": 46
+  }
+}

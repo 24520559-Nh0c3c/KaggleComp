@@ -1,0 +1,58 @@
+{
+  "model": "Clean Grandmaster Stacking (Context-PhoBERT + XLM-TTA + DeBERTa + RoBERTa + TF-IDF + NFKC Sim + LGBM/XGB/CatBoost 10-Fold)",
+  "features_count": 162,
+  "weights": [
+    1.0,
+    1.15,
+    0.95,
+    1.0
+  ],
+  "oof_macro_f1": 0.800969200108865,
+  "full_10fold_oof_macro_f1": 0.7971903099524179,
+  "dev_macro_f1": 0.7601757948899756,
+  "dev_classification_report": {
+    "0": {
+      "precision": 0.9478991596638655,
+      "recall": 0.9535080304311073,
+      "f1-score": 0.9506953223767383,
+      "support": 1183.0
+    },
+    "1": {
+      "precision": 0.7,
+      "recall": 0.4117647058823529,
+      "f1-score": 0.5185185185185185,
+      "support": 17.0
+    },
+    "2": {
+      "precision": 0.6722689075630253,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.6694560669456067,
+      "support": 120.0
+    },
+    "3": {
+      "precision": 0.9003690036900369,
+      "recall": 0.9037037037037037,
+      "f1-score": 0.9020332717190388,
+      "support": 270.0
+    },
+    "accuracy": 0.9176100628930818,
+    "macro avg": {
+      "precision": 0.8051342677292319,
+      "recall": 0.7339107766709576,
+      "f1-score": 0.7601757948899756,
+      "support": 1590.0
+    },
+    "weighted avg": {
+      "precision": 0.916375223764922,
+      "recall": 0.9176100628930818,
+      "f1-score": 0.9165855928201946,
+      "support": 1590.0
+    }
+  },
+  "test_distribution": {
+    "0": 2915,
+    "3": 703,
+    "2": 311,
+    "1": 45
+  }
+}

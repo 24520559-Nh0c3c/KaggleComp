@@ -1,0 +1,20 @@
+{
+  "train": "C:\\Users\\dongo\\Documents\\DS102\\ds-102-r-11-cnvn\\ds102_train.csv",
+  "test": "C:\\Users\\dongo\\Documents\\DS102\\ds-102-r-11-cnvn\\ds102_test.csv",
+  "sample": "C:\\Users\\dongo\\Documents\\DS102\\ds-102-r-11-cnvn\\ds102_samplesubmission.csv",
+  "dev": "C:\\Users\\dongo\\Documents\\DS102\\ds-102-r-11-cnvn\\ds102_dev.csv",
+  "output": "C:\\Users\\dongo\\Documents\\DS102\\ds-102-r-11-cnvn\\spam_output",
+  "models": [
+    "microsoft/deberta-v3-base",
+    "roberta-base",
+    "xlm-roberta-base"
+  ],
+  "epochs": 4,
+  "batch_size": 8,
+  "max_length": 256,
+  "learning_rate": 2e-05,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "patience": 3,
+  "seed": 42
+}

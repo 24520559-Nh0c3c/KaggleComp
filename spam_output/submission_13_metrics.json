@@ -1,0 +1,58 @@
+{
+  "model": "Super-Stacking (4 Level-1 Models + Product/Category LOO Aggregations + 10-Fold Train+Dev Refit)",
+  "features_count": 117,
+  "weights": [
+    1.0,
+    1.25,
+    1.1,
+    1.05
+  ],
+  "oof_macro_f1": 0.7959814820088227,
+  "full_10fold_oof_macro_f1": 0.7928105535033794,
+  "dev_macro_f1": 0.7610334802810914,
+  "dev_classification_report": {
+    "0": {
+      "precision": 0.9483050847457627,
+      "recall": 0.9459002535925612,
+      "f1-score": 0.9471011426153195,
+      "support": 1183.0
+    },
+    "1": {
+      "precision": 0.7777777777777778,
+      "recall": 0.4117647058823529,
+      "f1-score": 0.5384615384615384,
+      "support": 17.0
+    },
+    "2": {
+      "precision": 0.6194029850746269,
+      "recall": 0.6916666666666667,
+      "f1-score": 0.6535433070866141,
+      "support": 120.0
+    },
+    "3": {
+      "precision": 0.9101123595505618,
+      "recall": 0.9,
+      "f1-score": 0.9050279329608939,
+      "support": 270.0
+    },
+    "accuracy": 0.9132075471698113,
+    "macro avg": {
+      "precision": 0.8138995517871823,
+      "recall": 0.7373329065353952,
+      "f1-score": 0.7610334802810914,
+      "support": 1590.0
+    },
+    "weighted avg": {
+      "precision": 0.915173479725828,
+      "recall": 0.9132075471698113,
+      "f1-score": 0.9134322242878012,
+      "support": 1590.0
+    }
+  },
+  "test_distribution": {
+    "0": 2881,
+    "3": 711,
+    "2": 337,
+    "1": 45
+  }
+}

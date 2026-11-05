@@ -1,0 +1,6 @@
+﻿*.pt
+__pycache__/
+*.pyc
+.venv/
+spam_output/*.parquet
+spam_output/xlm_cls_features.npz

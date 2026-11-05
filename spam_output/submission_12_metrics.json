@@ -1,0 +1,20 @@
+{
+  "model": "Dual-Transformer Level-2 Stacking (XLM + DeBERTa + 5-Fold LGBM + 5-Fold XGBoost)",
+  "features_count": 55,
+  "alpha": 0.1,
+  "weights": [
+    1.0,
+    1.2,
+    0.95,
+    1.05
+  ],
+  "dev_macro_f1": 0.7372,
+  "oof_macro_f1": 0.7931,
+  "class_1_dev_f1": 0.5185,
+  "test_distribution": {
+    "0": 2884,
+    "3": 719,
+    "2": 326,
+    "1": 45
+  }
+}
