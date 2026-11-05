@@ -4,3 +4,4 @@ __pycache__/
 .venv/
 spam_output/*.parquet
 spam_output/xlm_cls_features.npz
+catboost_info/
