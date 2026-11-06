@@ -72,7 +72,9 @@ def best_desc_window(c_str, d_str, win_words=35, step=10, max_chars=175):
     return " ".join(d_words[best_idx : best_idx + win_words])[:max_chars]
 
 
-def build_context_texts(df):
+def build_context_texts(df, variant="a"):
+    if variant == "b":
+        return build_context_texts_b(df)
     out = []
     ratings = df["rating"].fillna(5).astype(int).tolist()
     sold = df["num_sold"].fillna(0).astype(int).tolist()
@@ -96,12 +98,43 @@ def build_context_texts(df):
     return out
 
 
+def build_context_texts_b(df):
+    """Variant B: product-first ordering + longer (50-word) description window, for ensemble diversity."""
+    out = []
+    ratings = df["rating"].fillna(5).astype(int).tolist()
+    cats = df["categories"].fillna("").tolist()
+    prods = df["product_name"].fillna("").tolist()
+    comms = df["comment"].fillna("").tolist()
+    descs = df["description"].fillna("").tolist()
+
+    for r, cat, p, c, d in zip(ratings, cats, prods, comms, descs):
+        c_norm = norm_nfkc(c).replace("\r\n", "\n").replace("\r", "\n")
+        c_norm = re.sub(r"\n+", " // ", c_norm)
+        c_norm = " ".join(c_norm.split())[:400]
+        cat_parts = [x.strip() for x in re.sub(r"[\[\]']", "", norm_nfkc(cat)).split(",") if x.strip()]
+        cat_norm = " > ".join(cat_parts[-2:])[:50]
+        p_norm = " ".join(norm_nfkc(p).split())[:90]
+        d_win = best_desc_window(c, d, win_words=50, step=10, max_chars=260)
+        out.append(f"{p_norm} | {cat_norm} | {r} sao </s> {c_norm} </s> {d_win}")
+    return out
+
+
+def keep_awake(enable=True):
+    """Ask Windows not to sleep while training (documented SetThreadExecutionState API; auto-reverts on exit)."""
+    if sys.platform != "win32":
+        return
+    import ctypes
+    ES_CONTINUOUS, ES_SYSTEM_REQUIRED = 0x80000000, 0x00000001
+    flags = ES_CONTINUOUS | ES_SYSTEM_REQUIRED if enable else ES_CONTINUOUS
+    ctypes.windll.kernel32.SetThreadExecutionState(flags)
+
+
 class XLMRobertaContextClassifier(nn.Module):
     def __init__(self, model_name, num_labels=4):
         super().__init__()
-        cfg = AutoConfig.from_pretrained(model_name, local_files_only=True)
+        cfg = AutoConfig.from_pretrained(model_name)
         cfg.add_pooling_layer = False
-        self.backbone = AutoModel.from_pretrained(model_name, config=cfg, local_files_only=True)
+        self.backbone = AutoModel.from_pretrained(model_name, config=cfg)
         # Freeze 250k multilingual token embeddings (saves 2.3GB VRAM, prevents PCIe spilling & rare-token overfitting!)
         self.backbone.embeddings.word_embeddings.requires_grad_(False)
         h = cfg.hidden_size
@@ -161,12 +194,18 @@ def best_calibrated_f1(y_true, probs):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--seed", type=int, default=SEED)
+    parser.add_argument("--variant", choices=["a", "b"], default="a")
+    parser.add_argument("--tag", default="xlm_ctx", help="output prefix, e.g. xlm_ctx2")
     args = parser.parse_args()
+    seed = args.seed
+    tag = args.tag
+    keep_awake(True)
 
-    random.seed(SEED)
-    np.random.seed(SEED)
-    torch.manual_seed(SEED)
-    torch.cuda.manual_seed_all(SEED)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device} | Smoke: {args.smoke}")
 
@@ -185,11 +224,12 @@ def main():
     n_de = len(dev)
 
     print("Building context-aware NFKC inputs for Train, Dev, and Test...")
-    tr_texts = build_context_texts(train)
-    de_texts = build_context_texts(dev)
-    te_texts = build_context_texts(test)
+    tr_texts = build_context_texts(train, args.variant)
+    de_texts = build_context_texts(dev, args.variant)
+    te_texts = build_context_texts(test, args.variant)
+    print("Example input:", tr_texts[0][:300])
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, local_files_only=True)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     full_texts = tr_texts + de_texts
     full_labels = np.concatenate([labels_tr, labels_de])
 
@@ -203,8 +243,8 @@ def main():
     test_probs = np.zeros((len(test), 4), dtype=np.float32)
 
     # Synchronized Stratified 5-Fold across Train (exact seed=42!) and Dev
-    skf_tr = list(StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED).split(tr_texts, labels_tr))
-    skf_de = list(StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED).split(de_texts, labels_de))
+    skf_tr = list(StratifiedKFold(n_splits=5, shuffle=True, random_state=seed).split(tr_texts, labels_tr))
+    skf_de = list(StratifiedKFold(n_splits=5, shuffle=True, random_state=seed).split(de_texts, labels_de))
 
     cls_weights = torch.tensor([1.0, 4.5, 2.0, 1.3], dtype=torch.float32, device=device)
     n_folds = 1 if args.smoke else 5
@@ -219,7 +259,7 @@ def main():
         comb_tr_idx = np.concatenate([tr_idx_a, n_tr + tr_idx_b])
         comb_val_idx = np.concatenate([val_idx_a, n_tr + val_idx_b])
 
-        rng = np.random.default_rng(SEED + fold * 100)
+        rng = np.random.default_rng(seed + fold * 100)
         model = XLMRobertaContextClassifier(MODEL_NAME, num_labels=4).to(device)
 
         # Differential learning rate over trainable parameters only
@@ -243,7 +283,7 @@ def main():
             "input_ids": [full_enc["input_ids"][i] for i in comb_val_idx],
             "attention_mask": [full_enc["attention_mask"][i] for i in comb_val_idx],
         }
-        ckpt_path = OUTPUT / f"xlm_ctx_fold_{fold}.pt"
+        ckpt_path = OUTPUT / f"{tag}_fold_{fold}.pt"
         best_score = -1.0
 
         for epoch in range(1, n_epochs + 1):
@@ -312,10 +352,11 @@ def main():
     print("\nClassification Report on Dev OOF:")
     print(classification_report(labels_de, oof_de.argmax(axis=1), digits=4))
 
-    np.save(OUTPUT / "xlm_ctx_oof.npy", oof_tr)
-    np.save(OUTPUT / "xlm_ctx_dev.npy", oof_de)
-    np.save(OUTPUT / "xlm_ctx_test.npy", test_probs)
-    print("Saved xlm_ctx_{oof,dev,test}.npy to spam_output/")
+    np.save(OUTPUT / f"{tag}_oof.npy", oof_tr)
+    np.save(OUTPUT / f"{tag}_dev.npy", oof_de)
+    np.save(OUTPUT / f"{tag}_test.npy", test_probs)
+    print(f"Saved {tag}_{{oof,dev,test}}.npy to spam_output/")
+    keep_awake(False)
 
 
 if __name__ == "__main__":
