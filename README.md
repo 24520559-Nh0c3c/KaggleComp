@@ -43,6 +43,7 @@ Giải pháp là mô hình **stacking nhiều tầng**:
 | 13 | Super-stacking + thống kê sản phẩm/danh mục | 0.79811 |
 | 14 | Context-PhoBERT + NFKC + 3 loại cây | 0.80036 |
 | 15 | Dual-context + KNN/SVD + tổ hợp cây | 0.80393 |
+| 16 | Dual-Run Context-XLM x2 + 80 cây + S15 anchor | 0.80557 (Top 3) |
 
 ## Cách chạy
 
