@@ -299,6 +299,9 @@ def load_optional_stream(prefix, n_tr, n_de, n_te):
         dev = np.load(p_dev)
         tst = np.load(p_tst)
         if oof.shape == (n_tr, 4) and dev.shape == (n_de, 4) and tst.shape == (n_te, 4):
+            if np.isnan(oof).any() or np.isnan(dev).any() or np.isnan(tst).any():
+                print(f"   [WARNING] Stream '{prefix}' contains NaN values! Rejecting stream.")
+                return None
             return oof, dev, tst
     return None
 
@@ -1121,6 +1124,13 @@ def main():
         **{f"b_oof_{k}": oof_mc_b[k] for k in oof_mc_b},
         **{f"b_test_{k}": test_mc_b[k] for k in test_mc_b},
     )
+
+    unique_preds = np.unique(test_preds)
+    print(f"Unique test prediction classes: {unique_preds.tolist()}")
+    if len(unique_preds) < 4:
+        raise ValueError(f"CRITICAL ERROR: test_preds collapsed! Only classes {unique_preds} present.")
+    if np.isnan(final_test).any() or np.isnan(final_oof).any():
+        raise ValueError("CRITICAL ERROR: probabilities contain NaN values!")
 
     submission_17 = make_submission(test, sample, test_preds)
     submission_17.to_csv(sub17_out, index=False)
